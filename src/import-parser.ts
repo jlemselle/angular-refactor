@@ -1,26 +1,30 @@
-import { File } from "./file";
+import { File } from "./models/file";
+import { Import } from "./models/import";
 
 export class ImportParser {
-  parseFile(file: File) {
-    const regex = /import (?:.* from ){0,1}['"](.*)['"];{0,1}/g;
+  parseFile(file: File): Import[] {
+    const importPattern = /import { (.+) } from ['"](.*)['"];{0,1}/g;
 
-    let results = [];
-    let result = this.getImport(regex, file.contents);
-    while (result !== null) {
-      results.push(result);
-      result = this.getImport(regex, file.contents);
+    let imports = [];
+
+    let match;
+    while ((match = importPattern.exec(file.contents)) !== null) {
+      const importInstance = this.getImport(match);
+      if (importInstance) {
+        imports.push(...importInstance);
+      }
     }
 
-    return results;
+    return imports;
   }
 
-  getImport(regex: RegExp, contents: string) {
-    const results = regex.exec(contents);
-
-    if (!results || results.length === 0) {
+  getImport(match: RegExpMatchArray): Import[] | null {
+    if (!match || match.length === 0) {
       return null;
     }
 
-    return { importPath: results[1] };
+    return match[1]
+      .split(",")
+      .map((x) => ({ token: x.trim(), path: match[2] }));
   }
 }

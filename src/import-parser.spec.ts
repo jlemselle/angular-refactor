@@ -1,5 +1,5 @@
-import { File } from "./file";
 import { ImportParser } from "./import-parser";
+import { File } from "./models/file";
 
 describe("import parsing", () => {
   let importParser: ImportParser;
@@ -15,78 +15,38 @@ describe("import parsing", () => {
   });
 
   it("should find single import in file", () => {
-    const file = new File("a.ts", "import { b } from 'b'");
+    const file = new File("a.ts", "import { b } from 'c';");
     const imports = importParser.parseFile(file);
-    expect(imports).toEqual([{ importPath: "b" }]);
-  });
 
-  it("should support trailing semicolon", () => {
-    const file = new File("a.ts", "import { b } from 'b';");
-    const imports = importParser.parseFile(file);
-    expect(imports).toEqual([{ importPath: "b" }]);
-  });
-
-  it("should support double quotes", () => {
-    const file = new File("a.ts", 'import { b } from "b";');
-    const imports = importParser.parseFile(file);
-    expect(imports).toEqual([{ importPath: "b" }]);
-  });
-
-  it("should support default export", () => {
-    const file = new File("a.ts", 'import defaultExport from "b";');
-    const imports = importParser.parseFile(file);
-    expect(imports).toEqual([{ importPath: "b" }]);
-  });
-
-  it("should support direct import", () => {
-    const file = new File("a.ts", 'import "b";');
-    const imports = importParser.parseFile(file);
-    expect(imports).toEqual([{ importPath: "b" }]);
+    expect(imports).toEqual([
+      expect.objectContaining({ token: "b", path: "c" }),
+    ]);
   });
 
   it("should support multiple imports", () => {
     const file = new File(
       "a.ts",
       `
-        import { b } from "b";
-        import { c } from "c";
-        import { d } from "d";
+        import { b } from "c";
+        import { d } from "e";
+        import { f } from "g";
       `
     );
     const imports = importParser.parseFile(file);
-    expect(imports.map((x) => x.importPath)).toEqual(["b", "c", "d"]);
+    expect(imports).toEqual([
+      expect.objectContaining({ token: "b", path: "c" }),
+      expect.objectContaining({ token: "d", path: "e" }),
+      expect.objectContaining({ token: "f", path: "g" }),
+    ]);
   });
 
-  it("should support multiple complex imports", () => {
-    const file = new File(
-      "a.ts",
-      `
-        import defaultExport from "b";
-        import * as name from "c";
-        import { export1 } from "d";
-        import { export1 as alias1 } from "e";
-        import { default as alias } from "f";
-        import { export1, export2 } from "g";
-        import { export1, export2 as alias2, /* … */ } from "h";
-        import { "string name" as alias } from "i";
-        import defaultExport, { export1, /* … */ } from "j";
-        import defaultExport, * as name from "k";
-        import "l";
-      `
-    );
+  it("should support multiple names", () => {
+    const file = new File("a.ts", "import { b, c } from 'd';");
     const imports = importParser.parseFile(file);
-    expect(imports.map((x) => x.importPath)).toEqual([
-      "b",
-      "c",
-      "d",
-      "e",
-      "f",
-      "g",
-      "h",
-      "i",
-      "j",
-      "k",
-      "l",
+
+    expect(imports).toEqual([
+      expect.objectContaining({ token: "b", path: "d" }),
+      expect.objectContaining({ token: "c", path: "d" }),
     ]);
   });
 });
