@@ -1,0 +1,9 @@
+{
+  "generators": {
+    "move-folder-generator": {
+      "factory": "./src/generators/move-folder-generator/generator",
+      "schema": "./src/generators/move-folder-generator/schema.json",
+      "description": "move-folder-generator generator"
+    }
+  }
+}
